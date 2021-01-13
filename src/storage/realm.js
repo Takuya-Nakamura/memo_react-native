@@ -1,12 +1,25 @@
-import Realm from 'realm'
-
 const MemoSchema = {
+
     name: 'Memo',
+    primaryKey: 'id',
     properties: {
-        name: 'string',
-        body: 'string',
+        id: 'string',
+        text: 'string',
+        created: 'date',
+        updated: 'date',
     }
 };
+const SettingSchema = {
+    name: 'Setting',
+    primaryKey: 'id',
+    properties: {
+        id: 'string',
+        hand: 'string',
+    }
+}
+export const realmOptions = {
+    schemaVersion: 0,
+    schema: [MemoSchema, SettingSchema]
+}
 
-export const realm = Realm.open({ schema: [MemoSchema] });
 
