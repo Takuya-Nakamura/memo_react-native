@@ -38,7 +38,7 @@ export class MemoIndex extends Component {
             footerItem2: new Animated.Value(width - iconSize - iconMargin),
 
 
-            icon: new Animated.Value(0),
+            iconSize: new Animated.Value(1),
             hand: 'left' //left, right
         }
 
@@ -105,21 +105,48 @@ export class MemoIndex extends Component {
         ]).start()
     }
 
+    pushIcon = () => {
+        console.log("pushIcon")
+        Animated.timing(
+            this.state.iconSize,
+            {
+                toValue: 150,
+                duration: 200,
+                useNativeDriver: true
+            }
+        ).start(() => {
+            this.setState({
+                iconSize: new Animated.Value(1),
+            })
+        });
+    }
     /**
      * dynamic style
      */
     dynamicStyle = () => {
+        const interPolateSize = this.state.iconSize.interpolate({
+            inputRange: [0, 50, 100, 150],
+            outputRange: [1, 1.5, 1.2, 1],
+        });
+
         return {
             transformX: {
                 transform: [{ translateX: this.state.footerXAnim }]
             },
             transFormItem1: {
-                transform: [{ translateX: this.state.footerItem1 }]
+                transform: [
+                    { translateX: this.state.footerItem1 },
+                    { scale: interPolateSize }
+                ]
             },
             transFormItem2: {
-                transform: [{ translateX: this.state.footerItem2 }],
+                transform: [
+                    { translateX: this.state.footerItem2 },
+                    { scale: interPolateSize }
+                ],
             },
-            touchIcon: {
+            icon: {
+                transform: [{ scale: interPolateSize }],
             }
         }
     }
@@ -168,6 +195,7 @@ export class MemoIndex extends Component {
     }
 
     onPressNew = () => {
+        this.pushIcon()
         this.props.navigation.navigate('メモ')
     }
 
@@ -176,6 +204,7 @@ export class MemoIndex extends Component {
     }
 
     onPressChange = () => {
+        this.pushIcon()
         this.saveSetting()
     }
 
@@ -204,14 +233,11 @@ export class MemoIndex extends Component {
         //animation style
         const dStyle = this.dynamicStyle()
 
-        // //icon position
-        // const footer__item1 = hand == 'left' ? styles.footer__item1 : styles.footer__item2
-        // const footer__item2 = hand == 'right' ? styles.footer__item1 : styles.footer__item2
-
 
         return (
             // <> フラグメントの省略記法
             <SafeAreaView style={styles.center}>
+
                 <FlatList
                     data={this.state.data}
                     renderItem={({ item, index }) => this.listCell(item, index)}
@@ -294,6 +320,7 @@ const styles = StyleSheet.create({
         width: iconSize,
         height: iconSize,
     }
+
 
 
 });
