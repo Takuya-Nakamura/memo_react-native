@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import {
+
     SafeAreaView,
     StyleSheet,
     View,
@@ -20,7 +21,7 @@ import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 const width = Dimensions.get('window').width
 const iconMargin = 44
 const iconSize = 65
-
+const bottomPos = 44 * 2
 
 export class MemoIndex extends Component {
 
@@ -34,8 +35,8 @@ export class MemoIndex extends Component {
         this.state = {
             data: [],
             footerXAnim: new Animated.Value(-300),
-            footerItem1: new Animated.Value(iconMargin),
-            footerItem2: new Animated.Value(width - iconSize - iconMargin),
+            footerItem1: new Animated.Value(iconMargin * 2),
+            footerItem2: new Animated.Value(width - iconSize - iconMargin * 2),
 
 
             iconSize: new Animated.Value(1),
@@ -79,8 +80,10 @@ export class MemoIndex extends Component {
     }
 
     changeIconPosition = (hand) => {
-        const leftPosition = iconMargin
-        const rightPostioin = width - iconMargin - iconSize
+        const leftPosition = iconMargin * 2
+        const rightPostioin = width - iconMargin * 2 - iconSize
+
+        console.log("newhand", hand)
         const item1 = hand == 'left' ? leftPosition : rightPostioin
         const item2 = hand == 'left' ? rightPostioin : leftPosition
         const conf = {
@@ -105,21 +108,22 @@ export class MemoIndex extends Component {
         ]).start()
     }
 
-    pushIcon = () => {
-        console.log("pushIcon")
-        Animated.timing(
-            this.state.iconSize,
-            {
-                toValue: 150,
-                duration: 200,
-                useNativeDriver: true
-            }
-        ).start(() => {
-            this.setState({
-                iconSize: new Animated.Value(1),
-            })
-        });
-    }
+    // pushIcon = () => {
+    //     console.log("pushIcon")
+    //     Animated.timing(
+    //         this.state.iconSize,
+    //         {
+    //             toValue: 150,
+    //             duration: 200,
+    //             useNativeDriver: true
+    //         }
+    //     ).start(() => {
+    //         this.setState({
+    //             iconSize: new Animated.Value(1),
+    //         })
+    //     });
+    // }
+
     /**
      * dynamic style
      */
@@ -195,7 +199,7 @@ export class MemoIndex extends Component {
     }
 
     onPressNew = () => {
-        this.pushIcon()
+        // this.pushIcon()
         this.props.navigation.navigate('メモ')
     }
 
@@ -204,8 +208,13 @@ export class MemoIndex extends Component {
     }
 
     onPressChange = () => {
-        this.pushIcon()
+        // this.pushIcon()
         this.saveSetting()
+    }
+
+    onPressTest = () => {
+        // this.pushIcon()
+        this.props.navigation.navigate('test')
     }
 
     /******************************
@@ -237,13 +246,11 @@ export class MemoIndex extends Component {
         return (
             // <> フラグメントの省略記法
             <SafeAreaView style={styles.center}>
-
                 <FlatList
                     data={this.state.data}
                     renderItem={({ item, index }) => this.listCell(item, index)}
                     style={styles.listView}
                 />
-
                 <Animated.View style={[styles.footer, dStyle.transformX]}>
                     <Animated.View style={[styles.footer__item1, dStyle.transFormItem1]}>
                         <TouchableWithoutFeedback onPress={this.onPressNew} >
@@ -256,6 +263,11 @@ export class MemoIndex extends Component {
                             <Image style={styles.icon} source={require('../../assets/change_mark.png')} />
                         </TouchableWithoutFeedback>
                     </ Animated.View>
+
+
+                    <TouchableWithoutFeedback style={styles.testButton} onPress={this.onPressTest} >
+                        <Text>To Test</Text>
+                    </TouchableWithoutFeedback>
 
                 </Animated.View>
 
@@ -307,18 +319,25 @@ const styles = StyleSheet.create({
 
     footer__item1: {
         position: 'absolute',
-        bottom: 0,
+        bottom: bottomPos,
         // left: 44
     },
     footer__item2: {
         position: 'absolute',
-        bottom: 0,
+        bottom: bottomPos,
         // right: 44
     },
 
     icon: {
         width: iconSize,
         height: iconSize,
+    },
+    testButton: {
+        width: iconSize,
+        height: iconSize,
+        borderWidth: 1,
+        backgroundColor: 'red'
+
     }
 
 
