@@ -12,19 +12,20 @@ import {
     Alert,
     Dimensions,
     Platform,
-    Keyboard
+    Keyboard,
 } from 'react-native';
 import { Color } from '../../global_config'
 
 import Realm from 'realm'
 import { realmOptions } from '../../storage/realm'
 import KeyboardSpacer from 'react-native-keyboard-spacer';
+import { ScrollView, TouchableHighlight } from 'react-native-gesture-handler';
 
 
 const width = Dimensions.get('window').width
-const iconMargin = 44
-const iconSize = 65
-const bottomPosition = 44 * 2
+const iconMargin = (width / 100) * 4
+const iconSize = 50
+const bottomPosition = 44 * 3
 
 //class
 export class MemoDetail extends React.Component {
@@ -36,13 +37,14 @@ export class MemoDetail extends React.Component {
     constructor(props) {
         super(props)
         const { params } = this.props.route;
+        this.textInputRef = React.createRef();
         this.state = {
             id: (params && params.id) ? params.id : this.id(),
             isEdit: (params && params.id) ? true : false,
             text: '',
             hand: 'left', //left, right
-            // bottomPosition: bottomPosition,
-            bottomPosition: new Animated.Value(100),
+            bottomPosition: bottomPosition,
+            pointerEvents: 'none'
         }
 
 
@@ -57,14 +59,14 @@ export class MemoDetail extends React.Component {
             this._keyboardDidHide,
         );
 
-        // this.keyboardWillShowListener = Keyboard.addListener(
-        //     'keyboardWillShow',
-        //     this._keyboardWillShow,
-        // );
-        // this.keyboardWillHideListener = Keyboard.addListener(
-        //     'keyboardWillHide',
-        //     this._keyboardWillHide,
-        // );
+        this.keyboardWillShowListener = Keyboard.addListener(
+            'keyboardWillShow',
+            this._keyboardWillShow,
+        );
+        this.keyboardWillHideListener = Keyboard.addListener(
+            'keyboardWillHide',
+            this._keyboardWillHide,
+        );
 
         this.loadSetting()
         if (this.state.isEdit) {
@@ -72,32 +74,22 @@ export class MemoDetail extends React.Component {
         }
     }
     componentWillUnmount() {
-        this.keyboardDidShowListener.remove();
-        this.keyboardDidHideListener.remove();
     }
 
-    _keyboardDidShow = () => {
+    _keyboardWillShow = () => {
         console.log('Keyboard Show')
-        Animated.timing(
-            this.state.bottomPosition,
-            {
-                toValue: 0,
-                duration: 50,
-                useNativeDriver: true
-            }
-        ).start();
+        this.setState({
+            bottomPosition: iconSize,
+            keyBoard: true
+        })
     }
 
-    _keyboardDidHide = () => {
+    _keyboardWillHide = () => {
         console.log('Keyboard Hide')
-        Animated.timing(
-            this.state.bottomPosition,
-            {
-                toValue: -88,
-                duration: 50,
-                useNativeDriver: true
-            }
-        ).start();
+        this.setState({
+            bottomPosition: bottomPosition,
+            keyBoard: false,
+        })
     }
 
     /**
@@ -115,7 +107,8 @@ export class MemoDetail extends React.Component {
                     id: this.state.id,
                     text: text,
                     updated: date,
-                    created: isEdit ? created : date
+                    created: isEdit ? created : date,
+                    keyBoard: false
                 }
 
                 realm.create(
@@ -186,10 +179,12 @@ export class MemoDetail extends React.Component {
         const { isEdit, hand, bottomPosition } = this.state
         const footer__item1 = hand == 'left' ? styles.footer__item1 : styles.footer__item3
         const footer__item2 = hand == 'left' ? styles.footer__item2 : styles.footer__item4
-
+        const footer_upper_item1 = hand == 'left' ? styles.footer__upper_item_left : styles.footer__upper_item_right
+        console.log("bottomPosition", bottomPosition)
         const dynamicStyle = StyleSheet.create({
-            transformY: {
-                transform: [{ translateY: bottomPosition }]
+            bottom: {
+                bottom: bottomPosition,
+                backgroundColor: "red"
             },
         })
 
@@ -197,21 +192,21 @@ export class MemoDetail extends React.Component {
         return (
             <>
                 <SafeAreaView style={styles.center}>
+
                     <TextInput
                         style={styles.textInput}
                         multiline={true}
                         onChangeText={(text) => this.save(text)}
                         defaultValue={this.state.text}
                         autoFocus={true}
-
                     />
 
-                    <Animated.View style={[styles.footer, dynamicStyle.transformY]}>
-                        <Animated.View style={[footer__item1]}>
+                    <View style={[styles.footer, dynamicStyle.bottom]}>
+                        <View style={[footer__item1]}>
                             <TouchableOpacity onPress={this.props.navigation.goBack}>
                                 <Image style={styles.icon} source={require('../../assets/back_mark.png')} />
                             </TouchableOpacity>
-                        </Animated.View>
+                        </View>
 
                         {/*  */}
 
@@ -222,21 +217,17 @@ export class MemoDetail extends React.Component {
                         </View>
                         }
 
-                        <View style={[{ left: 300 },]}>
+                        {this.state.keyBoard && <View style={[footer_upper_item1]}>
                             <TouchableOpacity onPress={this.keybordDissMiss} >
-                                <Image style={styles.icon} source={require('../../assets/cross_mark.png')} />
+                                <Image style={styles.icon} source={require('../../assets/down_mark.png')} />
                             </TouchableOpacity>
                         </View>
+                        }
 
-
-                    </Animated.View>
-
-
+                    </View>
 
                 </SafeAreaView >
                 { Platform.OS == 'ios' && <KeyboardSpacer />}
-
-
             </>
         );
     }
@@ -291,7 +282,7 @@ const styles = StyleSheet.create({
     footer__item2: {
         position: 'absolute',
         // bottom: bottomPos,
-        left: iconMargin * 4
+        left: iconMargin * 7
     },
 
 
@@ -303,8 +294,22 @@ const styles = StyleSheet.create({
     footer__item4: {
         position: 'absolute',
         // bottom: bottomPos,
-        right: iconMargin * 4
+        right: iconMargin * 7
     },
+
+
+    footer__upper_item_left: {
+        position: 'absolute',
+        bottom: iconMargin * 2,
+        left: iconMargin * 2
+    },
+
+    footer__upper_item_right: {
+        position: 'absolute',
+        bottom: iconMargin * 2,
+        right: iconMargin * 2
+    },
+
     icon: {
         width: iconSize,
         height: iconSize,

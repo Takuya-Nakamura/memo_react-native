@@ -20,8 +20,8 @@ import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 const width = Dimensions.get('window').width
 const iconMargin = 44
-const iconSize = 65
-const bottomPos = 44 * 2
+const iconSize = 50
+const bottomPos = 44 * 3
 
 export class MemoIndex extends Component {
 
@@ -42,8 +42,6 @@ export class MemoIndex extends Component {
             iconSize: new Animated.Value(1),
             hand: 'left' //left, right
         }
-
-
 
     }
 
@@ -108,21 +106,6 @@ export class MemoIndex extends Component {
         ]).start()
     }
 
-    // pushIcon = () => {
-    //     console.log("pushIcon")
-    //     Animated.timing(
-    //         this.state.iconSize,
-    //         {
-    //             toValue: 150,
-    //             duration: 200,
-    //             useNativeDriver: true
-    //         }
-    //     ).start(() => {
-    //         this.setState({
-    //             iconSize: new Animated.Value(1),
-    //         })
-    //     });
-    // }
 
     /**
      * dynamic style
@@ -265,9 +248,9 @@ export class MemoIndex extends Component {
                     </ Animated.View>
 
 
-                    <TouchableWithoutFeedback style={styles.testButton} onPress={this.onPressTest} >
+                    {/* <TouchableWithoutFeedback style={styles.testButton} onPress={this.onPressTest} >
                         <Text>To Test</Text>
-                    </TouchableWithoutFeedback>
+                    </TouchableWithoutFeedback> */}
 
                 </Animated.View>
 
@@ -314,17 +297,17 @@ const styles = StyleSheet.create({
 
     // styles footer
     footer: {
-
+        bottom: bottomPos,
     },
 
     footer__item1: {
         position: 'absolute',
-        bottom: bottomPos,
+        // bottom: bottomPos,
         // left: 44
     },
     footer__item2: {
         position: 'absolute',
-        bottom: bottomPos,
+        // bottom: bottomPos,
         // right: 44
     },
 
