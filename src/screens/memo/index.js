@@ -230,12 +230,12 @@ export class MemoIndex extends Component {
         return (
             // <> フラグメントの省略記法
             <SafeAreaView style={styles.center}>
-                <AdMobBanner
+                {/* <AdMobBanner
                     adSize="fullBanner"
                     adUnitID="ca-app-pub-5526141199637895/3321191932"
                     testDevices={[AdMobBanner.simulatorId]}
                     onAdFailedToLoad={(error) => console.error(error)}
-                />
+                /> */}
                 <FlatList
                     data={this.state.data}
                     renderItem={({ item, index }) => this.listCell(item, index)}

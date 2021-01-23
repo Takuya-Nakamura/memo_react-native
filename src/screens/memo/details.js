@@ -20,7 +20,7 @@ import { Color } from '../../global_config'
 import Realm from 'realm'
 import { realmOptions } from '../../storage/realm'
 import KeyboardSpacer from 'react-native-keyboard-spacer';
-import { ScrollView, TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { ScrollView } from 'react-native-gesture-handler';
 
 
 const { width, height } = Dimensions.get('window')
@@ -38,8 +38,6 @@ export class MemoDetail extends React.Component {
     constructor(props) {
         super(props)
         const { params } = this.props.route;
-        this.textInputRef = React.createRef();
-        this.scrollViewRef = React.createRef();
 
         this.state = {
             id: (params && params.id) ? params.id : this.id(),
@@ -47,8 +45,6 @@ export class MemoDetail extends React.Component {
             text: '',
             hand: 'left', //left, right
             bottomPosition: bottomPosition,
-            pointerEvents: 'none',
-            height: height,
         }
 
 
@@ -81,6 +77,7 @@ export class MemoDetail extends React.Component {
     }
 
     _keyboardWillShow = (event) => {
+        console.log("TEST")
         const keybordHeight = event.endCoordinates.screenY
         const textInputHeihgt = height - keybordHeight + 80
         this.setState({
@@ -179,13 +176,6 @@ export class MemoDetail extends React.Component {
         return new Date().getTime().toString(16) + Math.floor(strong * Math.random()).toString(16)
     }
 
-    onPressTextWrapper = (e) => {
-        const ref = this.textInputRef.current
-        this.setState({
-            pointerEvents: 'auto',
-        }, ref.focus())
-
-    }
     /**
      * render
      * 
@@ -195,59 +185,29 @@ export class MemoDetail extends React.Component {
         const footer__item1 = hand == 'left' ? styles.footer__item1 : styles.footer__item3
         const footer__item2 = hand == 'left' ? styles.footer__item2 : styles.footer__item4
         const footer_upper_item1 = hand == 'left' ? styles.footer__upper_item_left : styles.footer__upper_item_right
-        console.log("bottomPosition", bottomPosition)
+
+
         const dynamicStyle = StyleSheet.create({
             bottom: {
                 bottom: bottomPosition,
-                backgroundColor: "red"
             },
-            textInputHeight: {
-                height: this.state.height
-            }
         })
-
-        console.log("test", dynamicStyle.textInputHeight)
         return (
             <>
-                <View style={styles.center}>
-                    <ScrollView                    >
-                        <TouchableWithoutFeedback
-                            onPress={(e) => this.onPressTextWrapper(e)}
-                        >
-                            <TextInput
-                                style={[styles.textInput, dynamicStyle.textInputHeight]}
-                                multiline={true}
-                                onChangeText={(text) => this.save(text)}
-                                onFocus={() => console.log("focus")}
-                                defaultValue={this.state.text}
-                                autoFocus={true}
-                                pointerEvents={this.state.pointerEvents}
-                                ref={this.textInputRef}
-                            />
-                        </TouchableWithoutFeedback>
-
-                    </ScrollView>
-
-                    {/* <InputScrollView
-                        style={{ flex: 1, height: '100%', backgroundColor: "red" }}
-                    >
-                        <TextInput
-                            style={styles.textInput}
-                            multiline={true}
-                            onChangeText={(text) => this.save(text)}
-                            defaultValue={this.state.text}
-                            autoFocus={true}
-                        />
-                    </InputScrollView> */}
-
+                <SafeAreaView style={styles.center}>
+                    <TextInput
+                        style={[styles.textInput,]}//高さを指定するとscrollがそこで止まる
+                        multiline={true}
+                        onChangeText={(text) => this.save(text)}
+                        defaultValue={this.state.text}
+                        autoFocus={!this.state.isEdit}
+                    />
                     <View style={[styles.footer, dynamicStyle.bottom]}>
                         <View style={[footer__item1]}>
                             <TouchableOpacity onPress={this.props.navigation.goBack}>
                                 <Image style={styles.icon} source={require('../../assets/back_mark.png')} />
                             </TouchableOpacity>
                         </View>
-
-                        {/*  */}
 
                         {isEdit && <View style={[footer__item2]}>
                             <TouchableOpacity onPress={this.deleteAlert} >
@@ -265,7 +225,7 @@ export class MemoDetail extends React.Component {
 
                     </View>
 
-                </View >
+                </SafeAreaView >
                 { Platform.OS == 'ios' && <KeyboardSpacer />}
             </>
         );
@@ -281,8 +241,8 @@ const styles = StyleSheet.create({
     },
     textInput: {
         backgroundColor: Color.textBackgroundColor,
-        // flex: 1,
-        // height: height,
+        flex: 1,
+        // height: '100%',
         fontSize: 21,
         paddingHorizontal: 10,
         borderTopWidth: 1,
