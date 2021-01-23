@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import InputScrollView from 'react-native-input-scroll-view';
 import {
     KeyboardAvoidingView,
     SafeAreaView,
@@ -19,10 +20,10 @@ import { Color } from '../../global_config'
 import Realm from 'realm'
 import { realmOptions } from '../../storage/realm'
 import KeyboardSpacer from 'react-native-keyboard-spacer';
-import { ScrollView, TouchableHighlight } from 'react-native-gesture-handler';
+import { ScrollView, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 
-const width = Dimensions.get('window').width
+const { width, height } = Dimensions.get('window')
 const iconMargin = (width / 100) * 4
 const iconSize = 50
 const bottomPosition = 44 * 3
@@ -38,13 +39,16 @@ export class MemoDetail extends React.Component {
         super(props)
         const { params } = this.props.route;
         this.textInputRef = React.createRef();
+        this.scrollViewRef = React.createRef();
+
         this.state = {
             id: (params && params.id) ? params.id : this.id(),
             isEdit: (params && params.id) ? true : false,
             text: '',
             hand: 'left', //left, right
             bottomPosition: bottomPosition,
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            height: height,
         }
 
 
@@ -76,19 +80,23 @@ export class MemoDetail extends React.Component {
     componentWillUnmount() {
     }
 
-    _keyboardWillShow = () => {
-        console.log('Keyboard Show')
+    _keyboardWillShow = (event) => {
+        const keybordHeight = event.endCoordinates.screenY
+        const textInputHeihgt = height - keybordHeight + 80
         this.setState({
             bottomPosition: iconSize,
-            keyBoard: true
+            keyBoard: true,
+            height: textInputHeihgt,
+
         })
     }
 
     _keyboardWillHide = () => {
-        console.log('Keyboard Hide')
         this.setState({
             bottomPosition: bottomPosition,
             keyBoard: false,
+            height: height,
+            pointerEvents: 'none',
         })
     }
 
@@ -108,7 +116,7 @@ export class MemoDetail extends React.Component {
                     text: text,
                     updated: date,
                     created: isEdit ? created : date,
-                    keyBoard: false
+                    keyBoard: false,
                 }
 
                 realm.create(
@@ -171,6 +179,13 @@ export class MemoDetail extends React.Component {
         return new Date().getTime().toString(16) + Math.floor(strong * Math.random()).toString(16)
     }
 
+    onPressTextWrapper = (e) => {
+        const ref = this.textInputRef.current
+        this.setState({
+            pointerEvents: 'auto',
+        }, ref.focus())
+
+    }
     /**
      * render
      * 
@@ -186,20 +201,44 @@ export class MemoDetail extends React.Component {
                 bottom: bottomPosition,
                 backgroundColor: "red"
             },
+            textInputHeight: {
+                height: this.state.height
+            }
         })
 
-
+        console.log("test", dynamicStyle.textInputHeight)
         return (
             <>
-                <SafeAreaView style={styles.center}>
+                <View style={styles.center}>
+                    <ScrollView                    >
+                        <TouchableWithoutFeedback
+                            onPress={(e) => this.onPressTextWrapper(e)}
+                        >
+                            <TextInput
+                                style={[styles.textInput, dynamicStyle.textInputHeight]}
+                                multiline={true}
+                                onChangeText={(text) => this.save(text)}
+                                onFocus={() => console.log("focus")}
+                                defaultValue={this.state.text}
+                                autoFocus={true}
+                                pointerEvents={this.state.pointerEvents}
+                                ref={this.textInputRef}
+                            />
+                        </TouchableWithoutFeedback>
 
-                    <TextInput
-                        style={styles.textInput}
-                        multiline={true}
-                        onChangeText={(text) => this.save(text)}
-                        defaultValue={this.state.text}
-                        autoFocus={true}
-                    />
+                    </ScrollView>
+
+                    {/* <InputScrollView
+                        style={{ flex: 1, height: '100%', backgroundColor: "red" }}
+                    >
+                        <TextInput
+                            style={styles.textInput}
+                            multiline={true}
+                            onChangeText={(text) => this.save(text)}
+                            defaultValue={this.state.text}
+                            autoFocus={true}
+                        />
+                    </InputScrollView> */}
 
                     <View style={[styles.footer, dynamicStyle.bottom]}>
                         <View style={[footer__item1]}>
@@ -226,7 +265,7 @@ export class MemoDetail extends React.Component {
 
                     </View>
 
-                </SafeAreaView >
+                </View >
                 { Platform.OS == 'ios' && <KeyboardSpacer />}
             </>
         );
@@ -242,7 +281,8 @@ const styles = StyleSheet.create({
     },
     textInput: {
         backgroundColor: Color.textBackgroundColor,
-        flex: 1,
+        // flex: 1,
+        // height: height,
         fontSize: 21,
         paddingHorizontal: 10,
         borderTopWidth: 1,
@@ -283,6 +323,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         // bottom: bottomPos,
         left: iconMargin * 7
+
     },
 
 
