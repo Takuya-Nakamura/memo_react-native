@@ -1,4 +1,4 @@
-package com.memo;
+package com.takuya.nakamura.react.memo;
 
 import com.facebook.react.ReactActivity;
 

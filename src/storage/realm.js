@@ -5,6 +5,7 @@ const MemoSchema = {
     properties: {
         id: 'string',
         text: 'string',
+        order: 'int',
         created: 'date',
         updated: 'date',
     }
@@ -18,8 +19,9 @@ const SettingSchema = {
     }
 }
 export const realmOptions = {
-    schemaVersion: 0,
-    schema: [MemoSchema, SettingSchema]
+    schemaVersion: 1,
+    schema: [MemoSchema, SettingSchema],
+    migration: (oldRealm, newRealm) => {
+        // only apply this change if upgrading to schemaVersion 1
+    }
 }
-
-

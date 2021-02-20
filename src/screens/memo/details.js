@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import InputScrollView from 'react-native-input-scroll-view';
+import { AdMobBanner } from 'react-native-admob';
+
 import {
     KeyboardAvoidingView,
     SafeAreaView,
@@ -21,12 +23,13 @@ import Realm from 'realm'
 import { realmOptions } from '../../storage/realm'
 import KeyboardSpacer from 'react-native-keyboard-spacer';
 import { ScrollView } from 'react-native-gesture-handler';
+import { adUnitID } from '../../config/admob'
 
 
 const { width, height } = Dimensions.get('window')
 const iconMargin = (width / 100) * 4
 const iconSize = 50
-const bottomPosition = 44 * 3
+const bottomPosition = 44 * 2
 
 //class
 export class MemoDetail extends React.Component {
@@ -43,6 +46,7 @@ export class MemoDetail extends React.Component {
             id: (params && params.id) ? params.id : this.id(),
             isEdit: (params && params.id) ? true : false,
             text: '',
+            order: 0,
             hand: 'left', //left, right
             bottomPosition: bottomPosition,
         }
@@ -102,7 +106,7 @@ export class MemoDetail extends React.Component {
      * 
      */
     save = (text) => {
-        const { isEdit, created } = this.state
+        const { isEdit, created, order } = this.state
         if (!text) return
         Realm.open(realmOptions).then(realm => {
             realm.write(() => {
@@ -111,6 +115,7 @@ export class MemoDetail extends React.Component {
                     memo: {},
                     id: this.state.id,
                     text: text,
+                    order: order,
                     updated: date,
                     created: isEdit ? created : date,
                     keyBoard: false,
@@ -131,6 +136,7 @@ export class MemoDetail extends React.Component {
             this.setState({
                 memo: memos[0],
                 text: memos[0].text,
+                order: memos[0].order,
                 created: memos[0].created,
                 updated: memos[0].updated
             })
@@ -157,7 +163,7 @@ export class MemoDetail extends React.Component {
     }
     deleteAlert = () => {
         Alert.alert(
-            "削除してよいですか？",
+            "削除しますか？",
             '',
             [
                 { text: 'Cancel' },
@@ -175,6 +181,7 @@ export class MemoDetail extends React.Component {
         var strong = 1000;
         return new Date().getTime().toString(16) + Math.floor(strong * Math.random()).toString(16)
     }
+
 
     /**
      * render
@@ -200,7 +207,8 @@ export class MemoDetail extends React.Component {
                         multiline={true}
                         onChangeText={(text) => this.save(text)}
                         defaultValue={this.state.text}
-                        autoFocus={!this.state.isEdit}
+                        // autoFocus={!this.state.isEdit}
+                        autoFocus={true}
                     />
                     <View style={[styles.footer, dynamicStyle.bottom]}>
                         <View style={[footer__item1]}>
@@ -224,9 +232,17 @@ export class MemoDetail extends React.Component {
                         }
 
                     </View>
-
+                    {/* {!this.state.keyBoard && */}
+                    <AdMobBanner
+                        adSize="fullBanner"
+                        adUnitID={adUnitID()}
+                        testDevices={[AdMobBanner.simulatorId]}
+                        onAdFailedToLoad={(error) => console.error(error)}
+                    />
+                    {/* } */}
                 </SafeAreaView >
                 { Platform.OS == 'ios' && <KeyboardSpacer />}
+
             </>
         );
     }
@@ -242,12 +258,11 @@ const styles = StyleSheet.create({
     textInput: {
         backgroundColor: Color.textBackgroundColor,
         flex: 1,
-        // height: '100%',
         fontSize: 21,
         paddingHorizontal: 10,
         borderTopWidth: 1,
         borderColor: '#ccc',
-        backgroundColor: '#dfdfdf'
+        textAlignVertical: 'top' //for andtorid
     },
 
     backButton: {

@@ -18,11 +18,13 @@ import { Color } from '../../global_config'
 import Realm from 'realm'
 import { realmOptions } from '../../storage/realm'
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import DraggableFlatList from 'react-native-draggable-flatlist'
+import { adUnitID } from '../../config/admob'
 
 const width = Dimensions.get('window').width
 const iconMargin = 44
 const iconSize = 50
-const bottomPos = 44 * 3
+const bottomPos = 44 * 2
 
 export class MemoIndex extends Component {
 
@@ -38,7 +40,7 @@ export class MemoIndex extends Component {
             footerXAnim: new Animated.Value(-300),
             footerItem1: new Animated.Value(iconMargin * 2),
             footerItem2: new Animated.Value(width - iconSize - iconMargin * 2),
-
+            itemScale: new Animated.Value(1),
 
             iconSize: new Animated.Value(1),
             hand: 'left' //left, right
@@ -64,7 +66,7 @@ export class MemoIndex extends Component {
     }
 
     /******************************
-     * animation
+     * Animation
      ******************************/
     footerSlideIn = () => {
         // slide X
@@ -107,6 +109,15 @@ export class MemoIndex extends Component {
         ]).start()
     }
 
+    _itemTransformAnimation = (toValue) => {
+        const { itemScale } = this.state
+        Animated.timing(itemScale, {
+            toValue: toValue,
+            duration: 200,
+            useNativeDriver: true,
+        }).start();
+    }
+
 
     /**
      * dynamic style
@@ -144,7 +155,9 @@ export class MemoIndex extends Component {
      ******************************/
     load = () => {
         Realm.open(realmOptions).then(realm => {
-            let memos = realm.objects('Memo').sorted('created', true);// true=降順
+            // console.log(realm.path);
+            let memos = realm.objects('Memo').sorted('order', false);// true=降順
+            console.log("memos", memos)
             this.setState({
                 data: memos
             })
@@ -169,8 +182,25 @@ export class MemoIndex extends Component {
             this.setState({ hand: newHand })
             this.changeIconPosition(newHand)
         });
-
     }
+
+    saveOrder = (data) => {
+
+        Realm.open(realmOptions).then(realm => {
+            data.map((item, index) => {
+                console.log(index, item)
+                // save
+                realm.write(() => {
+                    const params = {
+                        id: item.id,
+                        order: index
+                    }
+                    realm.create('Memo', params, true)
+                })
+            })
+        });
+    }
+
 
     loadSetting = () => {
         Realm.open(realmOptions).then(realm => {
@@ -201,16 +231,62 @@ export class MemoIndex extends Component {
         this.props.navigation.navigate('test')
     }
 
+    itemOnLongPress = (drag) => {
+        this._itemTransformAnimation(0.95)
+        drag();
+    }
+
+    onDragEnd = ({ data }) => {
+        console.log("onDragEnd")
+        this._itemTransformAnimation(0.1)
+        this.saveOrder(data)
+        this.setState({
+            data: data
+        })
+    }
     /******************************
      * render
      ******************************/
-    listCell = (memo, index) => {
-        const { data } = this.state
+    // listCell = (memo, index) => {
+    //     const { data } = this.state
+    //     return (
+    //         <>
+    //             <TouchableOpacity key={index} style={styles.cell} onPress={() => this.onPressEdit(memo.id)}>
+    //                 <Text numberOfLines={1} ellipsizeMode={'clip'} style={styles.cell__text}>{this.titleOneLine(memo.text)}</Text>
+    //             </TouchableOpacity>
+    //             {/* 最後の要素の場合、ボタンと被らないで表示できるように余白要素を追加する */}
+    //             { index == data.length - 1 && <View style={styles.last_cell}></View>}
+    //         </>
+    //     )
+    // }
+
+
+    renderItem = ({ item, index, drag, isActive }) => {
+        const { data, itemScale } = this.state
+
+        const activeStyle = {
+            backgroundColor: "#ffdddd",
+            borderColor: "red",
+            borderWidth: 1,
+            transform: [
+                { scale: itemScale },
+            ],
+
+        };
+
+        const dStyle = isActive ? activeStyle : []
+        const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
         return (
             <>
-                <TouchableOpacity key={index} style={styles.cell} onPress={() => this.onPressEdit(memo.id)}>
-                    <Text numberOfLines={1} ellipsizeMode={'clip'} style={styles.cell__text}>{this.titleOneLine(memo.text)}</Text>
-                </TouchableOpacity>
+                <AnimatedTouchable
+                    key={index}
+                    style={[styles.cell, dStyle]}
+                    onPress={() => this.onPressEdit(item.id)}
+                    onLongPress={() => this.itemOnLongPress(drag)}
+                >
+                    <Text numberOfLines={1} ellipsizeMode={'clip'} style={styles.cell__text}>{this.titleOneLine(item.text)}</Text>
+                </AnimatedTouchable>
                 {/* 最後の要素の場合、ボタンと被らないで表示できるように余白要素を追加する */}
                 { index == data.length - 1 && <View style={styles.last_cell}></View>}
             </>
@@ -221,6 +297,7 @@ export class MemoIndex extends Component {
         return text.split('\n')[0]
     }
 
+
     render = () => {
         const { hand } = this.state
         //animation style
@@ -230,17 +307,20 @@ export class MemoIndex extends Component {
         return (
             // <> フラグメントの省略記法
             <SafeAreaView style={styles.center}>
-                {/* <AdMobBanner
-                    adSize="fullBanner"
-                    adUnitID="ca-app-pub-5526141199637895/3321191932"
-                    testDevices={[AdMobBanner.simulatorId]}
-                    onAdFailedToLoad={(error) => console.error(error)}
-                /> */}
-                <FlatList
+                <DraggableFlatList
+                    data={this.state.data}
+                    // renderItem={({ item, index }) => this.listCell(item, index)}
+                    keyExtractor={(item, index) => `draggable-item-${index}`}
+                    renderItem={this.renderItem}
+                    style={styles.listView}
+                    onDragEnd={this.onDragEnd}
+                />
+
+                {/* <FlatList
                     data={this.state.data}
                     renderItem={({ item, index }) => this.listCell(item, index)}
                     style={styles.listView}
-                />
+                /> */}
                 <Animated.View style={[styles.footer, dStyle.transformX]}>
                     <Animated.View style={[styles.footer__item1, dStyle.transFormItem1]}>
                         <TouchableWithoutFeedback onPress={this.onPressNew} >
@@ -260,6 +340,12 @@ export class MemoIndex extends Component {
                     </TouchableWithoutFeedback> */}
 
                 </Animated.View>
+                <AdMobBanner
+                    adSize="fullBanner"
+                    adUnitID={adUnitID()}
+                    testDevices={[AdMobBanner.simulatorId]}
+                    onAdFailedToLoad={(error) => console.error(error)}
+                />
 
             </SafeAreaView>
             // </> フラグメントの省略記法
@@ -286,7 +372,7 @@ const styles = StyleSheet.create({
         borderColor: '#ccc',
     },
     cell: {
-        height: 65,
+        height: 55,
         paddingVertical: 5,
         paddingHorizontal: 8,
         borderBottomWidth: 1,
